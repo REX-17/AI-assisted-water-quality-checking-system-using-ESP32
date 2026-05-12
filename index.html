@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI-Driven Water Quality Dashboard</title>
+    <style>
+        body { margin: 0; font-family: "Segoe UI", sans-serif; background: #0b1120; color: #e5e7eb; overflow-x: hidden; }
+        header { background: #020617; padding: 18px 32px; font-size: 22px; font-weight: bold; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; }
+        
+        .control-btn { padding: 8px 18px; font-size: 14px; font-weight: 600; border-radius: 20px; border: none; cursor: pointer; color: #020617; background: #22d3ee; transition: 0.3s; }
+        .control-btn.stop { background: #f87171; }
+        .control-btn.start { background: #22d3ee; }
+
+        .container { 
+            padding: 30px; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+            gap: 25px; 
+            max-width: 1400px; 
+            margin: auto;
+        }
+
+        .card { 
+            background: #020617; 
+            border-radius: 14px; 
+            padding: 25px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4); 
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #1e293b;
+        }
+
+        .card:hover { 
+            transform: scale(1.05); 
+            box-shadow: 0 10px 30px rgba(34, 211, 238, 0.15);
+            border-color: #22d3ee;
+        }
+
+        .title { font-size: 14px; color: #94a3b8; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .value { font-size: 36px; font-weight: bold; color: #ffffff; }
+        
+        .color-swatch { width: 50px; height: 50px; border-radius: 10px; border: 2px solid #1e293b; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        
+        /* Dynamic Badge Styling */
+        .badge { display: inline-block; padding: 8px 20px; border-radius: 20px; font-weight: 700; font-size: 14px; margin-top: 15px; text-transform: capitalize; }
+        .clean { background: #064e3b; color: #6ee7b7; }
+        .slightly-concerning { background: #3f6212; color: #bef264; }
+        .moderate { background: #78350f; color: #fde68a; }
+        .concerningly-high { background: #7f1d1d; color: #fecaca; }
+        .dangerous { background: #450a0a; color: #f87171; border: 1px solid #ef4444; }
+
+        .progress { background: #1e293b; border-radius: 10px; height: 16px; overflow: hidden; margin-top: 15px; }
+        .progress-bar { height: 100%; background: linear-gradient(to right, #22d3ee, #ef4444); width: 0%; transition: width 0.8s ease; }
+        
+        .text-box { font-size: 16px; line-height: 1.7; color: #cbd5e1; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #22d3ee; }
+    </style>
+</head>
+<body>
+
+<header>
+    AI-Driven Water Quality Dashboard
+    <button id="toggleBtn" class="control-btn stop">⏸ Stop Monitoring</button>
+</header>
+
+<div class="container">
+    <div class="card">
+        <div class="title">Contamination Percentage</div>
+        <div class="value" id="turbidity">--</div>
+        <div id="classificationBadge" class="badge">Waiting...</div>
+    </div>
+
+    <div class="card">
+        <div class="title">Unified Color & Visual Analysis</div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div id="colorSwatch" class="color-swatch" style="background: #ffffff;"></div>
+            <div>
+                <div class="value" id="hexLabel" style="font-size: 24px;">#FFFFFF</div>
+                <div id="visualAnalysis" style="color: #22d3ee; font-weight: 600; margin-top: 5px;">Scanning sample...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="title">Action Priority Index (API)</div>
+        <div class="value" id="apiValue">--</div>
+        <div class="progress"><div class="progress-bar" id="apiBar"></div></div>
+    </div>
+
+    <div class="card" style="grid-column: span 1.5;">
+        <div class="title">AI Interpretation (Reasoning)</div>
+        <div class="text-box" id="aiExplanation">Awaiting data stream...</div>
+    </div>
+
+    <div class="card" style="grid-column: span 1.5;">
+        <div class="title">Recommended Remediation Steps</div>
+        <div class="text-box" id="aiSuggestion" style="border-left-color: #f87171;">Awaiting data stream...</div>
+    </div>
+</div>
+
+<script>
+    let isMonitoring = true;
+    const toggleBtn = document.getElementById("toggleBtn");
+
+    toggleBtn.addEventListener("click", () => {
+        isMonitoring = !isMonitoring;
+        if (isMonitoring) {
+            toggleBtn.innerText = "⏸ Stop Monitoring";
+            toggleBtn.className = "control-btn stop";
+        } else {
+            toggleBtn.innerText = "▶ Resume Monitoring";
+            toggleBtn.className = "control-btn start";
+        }
+    });
+
+    async function fetchSensorData() {
+        if (!isMonitoring) return;
+
+        try {
+            const response = await fetch("http://127.0.0.1:5000/data");
+            const data = await response.json();
+            
+            if (data.turbidity !== "--") {
+                // Update Numeric Values
+                document.getElementById("turbidity").innerText = data.turbidity + "%";
+                document.getElementById("apiValue").innerText = data.api;
+                
+                // Update Color Section
+                document.getElementById("colorSwatch").style.background = data.color;
+                document.getElementById("hexLabel").innerText = data.color.toUpperCase();
+                document.getElementById("visualAnalysis").innerText = data.visual_analysis;
+                
+                // Update Badge
+                const badge = document.getElementById("classificationBadge");
+                badge.innerText = data.classification;
+                // Convert "Slightly Concerning" to "slightly-concerning" for CSS class
+                badge.className = "badge " + data.classification.toLowerCase().replace(/ /g, "-");
+
+                // Update Progress Bar
+                document.getElementById("apiBar").style.width = (data.api * 100) + "%";
+
+                // Update AI Text Sections
+                document.getElementById("aiExplanation").innerText = data.advice;
+                document.getElementById("aiSuggestion").innerText = data.remediation;
+            }
+        } catch (error) { 
+            console.log("Sync error:", error); 
+        }
+    }
+
+    // Faster refresh for better "hover" feel and responsiveness
+    setInterval(fetchSensorData, 1500);
+    fetchSensorData();
+</script>
+</body>
+</html>
