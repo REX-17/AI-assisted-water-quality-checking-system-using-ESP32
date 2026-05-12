@@ -35,18 +35,12 @@ AI-Assisted Real-Time Water Quality Monitoring using ESP32
 
 
 # System Architecture:
-Water Sample
-      ↓
-Turbidity Sensor + Color Sensor
-      ↓
-ESP32 Microcontroller
-      ↓
-Serial Communication
-      ↓
-Python Backend
-      ↓
-AI Advisory Layer
-      ↓
+Water Sample ->
+Turbidity Sensor + Color Sensor ->
+ESP32 Microcontroller ->
+Serial Communication ->
+Python Backend ->
+AI Advisory Layer ->
 Interactive Dashboard
 
 
