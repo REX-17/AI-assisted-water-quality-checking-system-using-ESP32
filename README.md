@@ -58,9 +58,9 @@ Interactive Dashboard
 
 # Experimental Validation:
 The system was calibrated using controlled contaminant concentrations (e.g., turmeric-water mixtures with known weight-to-volume ratios). Sensor readings were mapped to stable contamination percentages and classified into:
--Clean
--Moderate
--Heavy
+- Clean
+- Moderate
+- Heavy
 The fusion of turbidity and color sensing improved contamination estimation consistency compared to single-sensor monitoring.
 
 
